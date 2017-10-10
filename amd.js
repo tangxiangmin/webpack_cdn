@@ -1,7 +1,6 @@
-var require = window.require;
+import requirejs from "requirejs"
 
-// 外部CDN文件
-require.config({
+requirejs.config({
     baseUrl: '/',
     paths: {
         jquery: '//cdn.bootcss.com/jquery/3.2.1/jquery',
@@ -17,4 +16,20 @@ require.config({
     }
 })
 
-export default require;
+define("math", [], function(){
+    return {
+        test(){
+            console.log("this is test");
+        }
+    }
+})
+
+
+requirejs(["jquery", "math"], function($){
+    $("#test").text("Hello this is jquery");
+
+
+    var math = requirejs('math');
+    math.test();
+    
+})
