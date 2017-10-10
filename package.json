@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "bower-requirejs": "^1.2.0",
-    "requirejs": "^2.3.5"
+    "requirejs": "^2.3.5",
+    "systemjs": "^0.20.19"
   }
 }
