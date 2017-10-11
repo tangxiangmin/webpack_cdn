@@ -14,21 +14,17 @@ webpack在提供便利的同时会带来一些新的问题，将所有的工具�
 现在在项目中，采用的是手动将CDN模块以`script`标签引入，然后在`externals`声明外部模块。
 如何科学地管理第三方模块呢？下面是一点思考。
 
-## 方案一
+## 参考
+
+* [Require external (unmanaged) file](https://github.com/webpack/webpack/issues/150)
+* [webpack是否支持异步加载CDN的文件？](http://react-china.org/t/webpack-cdn/3706)
+* [Resolving remote or cdn urls](https://github.com/webpack/webpack/issues/240)
+
+## 方案一：requirejs与AMD模块
 * 使用`AMD`加载第三方CDN文件
 * 使用`webpack`打包本地模块
 
-### 评估
-优点：
-* 不需要将所有文件都打包，统一管理CDN文件，维护成本更低
-* 通过`AMD`，不需要管理外部文件的相互依赖
-* 通过webpack进行打包本地模块，不需要使用r.js
-
-缺点：
-* 依赖于CDN模块的本地模块，只能遵循`AMD`规范定义，即使用`define`，因此需要准确区分模块的id
-* 现有的`Commonjs`迁移到`AMD`模块，工作量比较大，手动迁移容易出问题
-
-### 纯粹的本地模块
+**纯粹的本地模块**
 ```js
 // math.js
 var add = function(a, b){
@@ -39,7 +35,7 @@ export default {
 }
 ```
 
-### 依赖于CDN模块的本地模块
+**依赖于CDN模块的本地模块**
 
 ```js
 // red.js
@@ -85,10 +81,11 @@ define("blue", ['jquery', 'layer'], function($){
     }    
 })
 ```
-### 打包
+
+
 除了CDN模块，后面两种类型的模块都需要进行打包，这可以通过`webpack`简单实现
 
-### 使用
+### 使用方式
 
 建立一个`require.config.js`的配置文件，用于管理所有的外部文件
 ```js
@@ -155,16 +152,33 @@ module.exports = {
 }
 ```
 
+### 评估
+
+优点：
+
+- 不需要将所有文件都打包，统一管理CDN文件，维护成本更低
+- 通过`AMD`，不需要管理外部文件的相互依赖
+- 通过webpack进行打包本地模块，不需要使用r.js
+
+缺点：
+
+- 依赖于CDN模块的本地模块，只能遵循`AMD`规范定义，即使用`define`，因此需要准确区分模块的id
+- 现有的`Commonjs`迁移到`AMD`模块，工作量比较大，手动迁移容易出问题
 
 ### 疑问
+
 为什么webpack没有提供类似的功能，即在加载`externals`的时候，如果没有找到全局变量，则通过AMD加载对应的文件~
 
 webpack内置了`require`和`define`的方法，但是不能指定url，这样就无法实现上面的功能。正在重新翻文档，希望一切顺利。
 
+突然发现作者**sokra **在这个[issue](https://github.com/webpack/webpack/issues/2592)回复的~
+
+> webpack doesn't take care of the module **loading**. You need to use another library for the loading part
+
 然后找到了方案二。
 
 
-## 方案二
+## 方案二：SystemJS脚本加载器
 通过`SystemJS`与`externals`。
 
 ### 思路
@@ -177,7 +191,7 @@ module.exports = window.jQuery;
 
 然后发现了[SystemJS](https://www.npmjs.com/package/systemjs)， 这是一款用来加载脚本的插件，对应的浏览器版本提供了与`requirejs`的`load`类似的异步加载功能。
 
-没错，就是你了。
+没错，就是你了。有大佬给出了脚本加载器的[简单实现](https://github.com/webpack/webpack/issues/150#issuecomment-275952354)。
 
 ### 使用方式
 对着文档，跟`requirejs`的模块加载方式比较类似，
@@ -210,6 +224,8 @@ SystemJS.import('jquery').then($=>{
 })
 ```
 
+SystemJS再将CDN脚本加载到全局环境之后，会自动移除对应的脚本节点，所以在页面上无法看见对应的`script`标签。
+
 ### 评估
 
 优点：
@@ -221,6 +237,8 @@ SystemJS.import('jquery').then($=>{
 * 需要通过维护`SystemJS.config`和`externals`两个地方的模块声明
 
 总体来说要比方案一的迁移成本低得多。
+
 ## 最后
 
-最后决定采用**方案二**，这样，貌似解决了困扰我很久的一个问题~
+最后决定采用**方案二**，这样，貌似解决了困扰我很久的一个问题。
+
