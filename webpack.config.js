@@ -13,7 +13,8 @@ module.exports = {
     },
     externals: {    
         systemjs: 'SystemJS',
-        jquery: 'jQuery'
+        jquery: 'jQuery',
+        layer: 'layer'
     }
 
 }

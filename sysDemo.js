@@ -1,16 +1,17 @@
 import SystemJS from "./systemjs.config"
+// import SystemJS from "systemjs"
 
-console.time("sc");
+import common from "./sys/common"
 
-SystemJS.import('jquery').then($=>{
-    console.timeEnd("sc");
-    // 依赖CDN模块的模块只能通过CommonJS来调用
-    var yellow = require("./sys/yellow");
-
-    // 报错
-    // import yellow from "./sys/yellow_es6"
-
-    yellow.yellowify("#test");
-   
+// console.log("wait 2s...");
+  
+common.then(res=>{
+    console.timeEnd("all");
+    console.time("all");
+    var mod_1 = require("./sys/mod_1.js");
+    var mod_2 = require("./sys/yellow_es6");
+    console.log(mod_2.default);
+    console.log(mod_2);
+    mod_1.test();
 })
 
